@@ -28,7 +28,7 @@ write.table(data_snp_coord, file = "snp.txt", sep = "\t", row.names = F)
 
 #Import imputed data
 for (chr in seq(1:21)){
-  file=paste0("/ancestral_snp/snp_imputed_",chr,".txt")
+  file=paste0("snp_imputed_",chr,".txt")
   if (file.exists(file)){
     assign(paste0("snp_",chr,"_imputed"),read.delim(file, header = T, sep = "\t", row.names = NULL))
   }
