@@ -1,7 +1,7 @@
 #!/bin/bash
 
-#SBATCH --error=/storage/groups/cbm01/workspace/phong.nguyen_new/ethnicity_in_cancer/sbatch_log/imputation_%J.err
-#SBATCH --output=/storage/groups/cbm01/workspace/phong.nguyen_new/ethnicity_in_cancer/sbatch_log/imputation_%J.out
+#SBATCH --error=$3/sbatch_log/imputation_%J.err
+#SBATCH --output=$3/sbatch_log/imputation_%J.out
 #SBATCH --mem-per-cpu=30G
 #SBATCH --cpus-per-task=4
 #SBATCH -p cpu_p
@@ -11,9 +11,11 @@
 
 echo Starting time is: $(date) | sed G
 
-WDIR=$1
+IMAGE=$1
 SCRIPT=$2
-IMAGE=$3
+WDIR=$3
+DDIR=$4
+REFDIR=$5
 
 if [[ -d /localscratch/$USER ]] 
 	then
@@ -29,7 +31,7 @@ echo Extracting image to local scratch... | sed G
 srun ch-tar2dir $WDIR/$IMAGE.tar.gz /localscratch/$USER/
 
 echo Running container and imputation script | sed G  
-ch-run --set-env=$WDIR/environment -b /storage/groups/:/storage/groups /localscratch/$USER/$IMAGE/ -- /bin/bash $WDIR/$SCRIPT
+ch-run --set-env=$WDIR/environment -b /storage/groups/:/storage/groups /localscratch/$USER/$IMAGE/ -- /bin/bash $WDIR/$SCRIPT $WDIR $DDIR $REFDIR
 
 echo Deleting the image... | sed G 
 rm -rf /localscratch/$USER/$IMAGE/ 

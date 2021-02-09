@@ -1,8 +1,8 @@
 #!/bin/bash
 
-WDIR=/storage/groups/cbm01/workspace/phong.nguyen_new/ethnicity_in_cancer
-DDIR=/storage/groups/cbm01/datasets/phong.nguyen/affy_data
-REFDIR=/storage/groups/cbm01/datasets/phong.nguyen/reference
+WDIR=$1
+DDIR=$2
+REFDIR=$3
 LEGFILE=${REFDIR}/legend/1000GP_Phase3_combined.legend
 VCFFILE=${REFDIR}/vcf
 M3VCFFILE=${REFDIR}/m3vcf
