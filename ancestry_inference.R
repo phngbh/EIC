@@ -5,27 +5,6 @@ library(dplyr)
 library(biomaRt)
 library(stringr)
 
-#Load 100 SNPs
-data_snp = read.csv("100snps.txt", sep = "\t", header = F)
-
-#Get info from biomart
-snp_mart = useMart(biomart="ENSEMBL_MART_SNP", 
-                   host="grch37.ensembl.org", path="/biomart/martservice", 
-                   dataset="hsapiens_snp")
-data_snp_mart = getBM(attributes=c(
-  "refsnp_id", "chr_name","allele", "allele_1", "minor_allele",
-  "minor_allele_freq", "synonym_name", "variation_names"),
-  filters="snp_filter", values=data_snp$V1,
-  mart=snp_mart, uniqueRows=TRUE)
-  
-#Get coordinates for 100 SNPs (for genotype imputation using other tools)
-data_snp_coord = getBM(attributes=c(
-  "refsnp_id", "chr_name", "chrom_start", "chrom_end"),
-  filters="snp_filter", values=rsID_ethc,
-  mart=snp_mart, uniqueRows=TRUE)
-data_snp_coord = data_snp_coord[-grep("H",data_snp_coord$chr_name),]
-write.table(data_snp_coord, file = "snp.txt", sep = "\t", row.names = F)
-
 #Import imputed data
 for (chr in seq(1:21)){
   file=paste0("snp_imputed_",chr,".txt")
@@ -42,9 +21,8 @@ for (chr in seq(1:21)){
     assign(name,obj)
   }
 }
-snp_5_imputed = snp_5_imputed[-4,]
-snp_11_imputed = snp_11_imputed[-2,]
-snp_imputed= do.call(rbind, lapply( paste0("snp_",c(1:6,8:20),"_imputed") , get) )
+
+snp_imputed= do.call(rbind, lapply( paste0("snp_",c(1:21),"_imputed") , get) )
 snp_imputed$ID= as.character(snp_imputed$ID)
 index=match(snp_imputed$POS,data_snp_coord$chrom_start)
 for (i in 1:length(index)){
@@ -87,6 +65,8 @@ data_1kg=data_1kg[!data_1kg$population %in% c("ALL","AFR","AMR","EAS","EUR","SAS
 
 prob = vector(mode = "list", length = ncol(data_final))
 names(prob) = colnames(data_final)
+prob_mat = matrix(nrow = ncol(data_final), ncol = nlevels(data_1kg$population),
+                  dimnames = list(colnames(data_final),levels(data_1kg$population)))
 
 for (n in 1:ncol(data_final)){
   prob[[n]] = matrix(nrow = nrow(data_final), ncol = nlevels(data_1kg$population),
@@ -107,18 +87,17 @@ for (n in 1:ncol(data_final)){
       prob[[n]][i,j] = as.numeric(temp_snp_freq) * as.numeric(temp_pop_size)  
     } 
   }
-  prob[[n]] = apply(prob[[n]], 2, prod, na.rm=T) 
-  prob[[n]] = names(which.max(prob[[n]]))
+  prob_mat[n,] = apply(prob[[n]], 2, prod, na.rm=T) 
 }
 
-prob_vec = unlist(prob)
+prob_vec = prob_vec = apply(prob_mat,1,function(x) names(which.max(x)))
 cell_ancestry = data.frame(cell=names(prob_vec), ancestry=prob_vec)
 cell_ancestry$sup_pop=match(cell_ancestry$ancestry,data_1kg$population)
 cell_ancestry$sup_pop=data_1kg$sup_pop[cell_ancestry$sup_pop]
 cell_ancestry$cell = str_replace_all(cell_ancestry$cell, c("\\."="-", "^X"="")) 
-cell_info=read.csv("cell_line.csv",header = T)
-cell_ancestry$cancer=match(cell_ancestry$cell,cell_info$Name)
-cell_ancestry$cancer=cell_info$Cancer[cell_ancestry$cancer]
+
+saveRDS(prob_mat, file = "prob_mat.rds")
+write.table(cell_ancestry, file = "cell_ancestry.csv", row.names = F, quote = F, sep = ",")
 
 
 
