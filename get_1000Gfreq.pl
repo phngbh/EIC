@@ -17,7 +17,7 @@ my $va_adaptor = $registry->get_adaptor('human','variation','variation');
 $va_adaptor->db->use_vcf(1);
 
 
-my $filename = '/home/ensembl/src/100snps.txt';
+my $filename = '100snps.txt';
 open(my $fh, '<:encoding(UTF-8)', $filename)
   or die "Could not open file '$filename' $!";
  
@@ -35,7 +35,7 @@ foreach my $snps (@snps) {
    my $pop_name = $genotype->population->name;
    my $gt_name = $genotype->genotype_string;
    my $freq = $genotype->frequency;
-    open (FH, '>>', '/home/ensembl/src/genotypes2.txt') or die "Could not open file $!";
+    open (FH, '>>', 'genotypes2.txt') or die "Could not open file $!";
   print FH "$snps $pop_name $gt_name $freq\n";
   close (FH);
 }
